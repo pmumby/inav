@@ -44,6 +44,7 @@
 #include "sensors/pitotmeter.h"
 #include "flight/imu.h"
 #include "flight/pid.h"
+#include "flight/mixer.h"
 #include "drivers/io_port_expander.h"
 #include "io/osd_common.h"
 #include "sensors/diagnostics.h"
@@ -59,6 +60,7 @@ PG_REGISTER_ARRAY_WITH_RESET_FN(logicCondition_t, MAX_LOGIC_CONDITIONS, logicCon
 EXTENDED_FASTRAM uint64_t logicConditionsGlobalFlags;
 EXTENDED_FASTRAM int logicConditionValuesByType[LOGIC_CONDITION_LAST];
 EXTENDED_FASTRAM rcChannelOverride_t rcChannelOverrides[MAX_SUPPORTED_RC_CHANNEL_COUNT];
+EXTENDED_FASTRAM motorOverride_t motorOverrides[MAX_SUPPORTED_MOTORS];
 
 void pgResetFn_logicConditions(logicCondition_t *instance)
 {
@@ -325,6 +327,14 @@ static int logicConditionCompute(
             rcChannelOverrides[temporaryValue].active = true;
             rcChannelOverrides[temporaryValue].value = constrain(operandB, PWM_RANGE_MIN, PWM_RANGE_MAX);
             LOGIC_CONDITION_GLOBAL_FLAG_ENABLE(LOGIC_CONDITION_GLOBAL_FLAG_OVERRIDE_RC_CHANNEL);
+            return true;
+        break;
+
+        case LOGIC_CONDITION_MOTOR_OVERRIDE:
+            temporaryValue = constrain(operandA - 1, 0, MAX_SUPPORTED_MOTORS - 1);
+            motorOverrides[temporaryValue].active = true;
+            motorOverrides[temporaryValue].value = constrain(operandB, PWM_RANGE_MIN, PWM_RANGE_MAX);
+            LOGIC_CONDITION_GLOBAL_FLAG_ENABLE(LOGIC_CONDITION_GLOBAL_FLAG_OVERRIDE_MOTOR);
             return true;
         break;
 
@@ -759,6 +769,14 @@ int16_t getRcCommandOverride(int16_t command[], uint8_t axis) {
 int16_t getRcChannelOverride(uint8_t channel, int16_t originalValue) {
     if (rcChannelOverrides[channel].active) {
         return rcChannelOverrides[channel].value;
+    } else {
+        return originalValue;
+    }
+}
+
+int16_t getMotorOverride(uint8_t channel, int16_t originalValue) {
+    if (motorOverrides[channel].active) {
+        return motorOverrides[channel].value;
     } else {
         return originalValue;
     }

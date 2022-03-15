@@ -593,7 +593,11 @@ void FAST_CODE mixTable()
     if (ARMING_FLAG(ARMED)) {
         const motorStatus_e currentMotorStatus = getMotorStatus();
         for (int i = 0; i < motorCount; i++) {
-            motor[i] = rpyMix[i] + constrain(mixerThrottleCommand * currentMixer[i].throttle, throttleMin, throttleMax);
+            #ifdef USE_PROGRAMMING_FRAMEWORK
+                motor[i] = rpyMix[i] + constrain(getMotorOverride(i,mixerThrottleCommand) * currentMixer[i].throttle, throttleMin, throttleMax);
+            #else
+                motor[i] = rpyMix[i] + constrain(mixerThrottleCommand * currentMixer[i].throttle, throttleMin, throttleMax);
+            #endif
 
             if (failsafeIsActive()) {
                 motor[i] = constrain(motor[i], motorConfig()->mincommand, motorConfig()->maxthrottle);

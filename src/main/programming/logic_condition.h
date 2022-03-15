@@ -75,6 +75,7 @@ typedef enum {
     LOGIC_CONDITION_MIN                         = 43,
     LOGIC_CONDITION_MAX                         = 44,
     LOGIC_CONDITION_LAST                        = 45,
+    LOGIC_CONDITION_MOTOR_OVERRIDE              = 46,
 } logicOperation_e;
 
 typedef enum logicOperandType_s {
@@ -156,6 +157,7 @@ typedef enum {
     LOGIC_CONDITION_GLOBAL_FLAG_OVERRIDE_OSD_LAYOUT = (1 << 7),
     LOGIC_CONDITION_GLOBAL_FLAG_OVERRIDE_RC_CHANNEL = (1 << 8),
     LOGIC_CONDITION_GLOBAL_FLAG_OVERRIDE_LOITER_RADIUS = (1 << 9),
+    LOGIC_CONDITION_GLOBAL_FLAG_OVERRIDE_MOTOR = (1 << 10),
 } logicConditionsGlobalFlags_t;
 
 typedef enum {
@@ -188,6 +190,11 @@ typedef struct rcChannelOverride_s {
     int value;
 } rcChannelOverride_t;
 
+typedef struct motorOverride_s {
+    uint8_t active;
+    int value;
+} motorOverride_t;
+
 extern int logicConditionValuesByType[LOGIC_CONDITION_LAST];
 extern uint64_t logicConditionsGlobalFlags;
 
@@ -206,4 +213,5 @@ void logicConditionReset(void);
 float getThrottleScale(float globalThrottleScale);
 int16_t getRcCommandOverride(int16_t command[], uint8_t axis);
 int16_t getRcChannelOverride(uint8_t channel, int16_t originalValue);
+int16_t getMotorOverride(uint8_t channel, int16_t originalValue);
 uint32_t getLoiterRadius(uint32_t loiterRadius);
