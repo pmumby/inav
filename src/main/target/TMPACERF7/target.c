@@ -37,7 +37,7 @@ const timerHardware_t timerHardware[] = {
 
     //Misc Output Channels:
     //LED on PA15, allows  TIM2/CH1
-    DEF_TIM(TIM2, CH1, PA15, TIM_USE_LED,                         0, 0),
+    DEF_TIM(TIM2, CH1, PA15, TIM_USE_LED,                         0, 0), 
     //??? on PA8, allows TIM1/CH1
     DEF_TIM(TIM1, CH1, PA8, TIM_USE_ANY,                         0, 0),  
 };

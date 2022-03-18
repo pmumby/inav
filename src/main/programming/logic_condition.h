@@ -75,7 +75,8 @@ typedef enum {
     LOGIC_CONDITION_MIN                         = 43,
     LOGIC_CONDITION_MAX                         = 44,
     LOGIC_CONDITION_MOTOR_OVERRIDE              = 45,
-    LOGIC_CONDITION_LAST                        = 46,
+    LOGIC_CONDITION_FORCE_MOTOR_FIXED           = 46,
+    LOGIC_CONDITION_LAST                        = 47,
 } logicOperation_e;
 
 typedef enum logicOperandType_s {
@@ -213,5 +214,6 @@ void logicConditionReset(void);
 float getThrottleScale(float globalThrottleScale);
 int16_t getRcCommandOverride(int16_t command[], uint8_t axis);
 int16_t getRcChannelOverride(uint8_t channel, int16_t originalValue);
-int16_t getMotorOverride(uint8_t channel, int16_t originalValue);
+int16_t getMotorOverride(uint8_t channel, int16_t inputValue, float throttleMix, int16_t throttleMin, int16_t throttleMax, int16_t rpyMix);
+bool getMotorDirFixed(uint8_t channel);
 uint32_t getLoiterRadius(uint32_t loiterRadius);

@@ -240,7 +240,11 @@ void mixerResetDisarmedMotors(void)
 
     // set disarmed motor values
     for (int i = 0; i < MAX_SUPPORTED_MOTORS; i++) {
-        motor_disarmed[i] = motorZeroCommand;
+        #ifdef USE_PROGRAMMING_FRAMEWORK
+            motor_disarmed[i] = getMotorDirFixed(i) ? getThrottleIdleValue() : motorZeroCommand;
+        #else
+            motor_disarmed[i] = motorZeroCommand;
+        #endif
     }
 }
 
@@ -353,10 +357,16 @@ void FAST_CODE writeMotors(void)
         uint16_t motorValue;
 
 #ifdef USE_DSHOT
+        #ifdef USE_PROGRAMMING_FRAMEWORK
+            bool motorDirFixed = getMotorDirFixed(i);
+        #else
+            bool motorDirFixed = false;
+        #endif
+
         // If we use DSHOT we need to convert motorValue to DSHOT ranges
         if (isMotorProtocolDigital()) {
 
-            if (feature(FEATURE_REVERSIBLE_MOTORS)) {
+            if (feature(FEATURE_REVERSIBLE_MOTORS) && !motorDirFixed) {
                 if (reversibleMotorsThrottleState == MOTOR_DIRECTION_FORWARD) {
                     motorValue = handleOutputScaling(
                         motor[i],
@@ -395,7 +405,7 @@ void FAST_CODE writeMotors(void)
             }
         }
         else {
-            if (feature(FEATURE_REVERSIBLE_MOTORS)) {
+            if (feature(FEATURE_REVERSIBLE_MOTORS) && !motorDirFixed) {
                 if (reversibleMotorsThrottleState == MOTOR_DIRECTION_FORWARD) {
                     motorValue = handleOutputScaling(
                         motor[i],
@@ -444,7 +454,14 @@ void writeAllMotors(int16_t mc)
 
 void stopMotors(void)
 {
-    writeAllMotors(feature(FEATURE_REVERSIBLE_MOTORS) ? reversibleMotorsConfig()->neutral : motorConfig()->mincommand);
+    #ifdef USE_PROGRAMMING_FRAMEWORK
+        for (int i = 0; i < motorCount; i++) {
+            motor[i] = (feature(FEATURE_REVERSIBLE_MOTORS)&&!getMotorDirFixed(i)) ? reversibleMotorsConfig()->neutral : motorConfig()->mincommand;
+        }
+        writeMotors();
+    #else
+        writeAllMotors(feature(FEATURE_REVERSIBLE_MOTORS) ? reversibleMotorsConfig()->neutral : motorConfig()->mincommand);
+    #endif
 
     delay(50); // give the timers and ESCs a chance to react.
 }
@@ -594,7 +611,11 @@ void FAST_CODE mixTable()
         const motorStatus_e currentMotorStatus = getMotorStatus();
         for (int i = 0; i < motorCount; i++) {
             #ifdef USE_PROGRAMMING_FRAMEWORK
-                motor[i] = rpyMix[i] + constrain(getMotorOverride(i,mixerThrottleCommand) * currentMixer[i].throttle, throttleMin, throttleMax);
+                if(getMotorDirFixed(i)){
+                    motor[i] = getMotorOverride(i,mixerThrottleCommand,currentMixer[i].throttle,throttleIdleValue,motorConfig()->maxthrottle,rpyMix[i]);
+                }else{
+                    motor[i] = getMotorOverride(i,mixerThrottleCommand,currentMixer[i].throttle,throttleMin,throttleMax,rpyMix[i]);
+                }
             #else
                 motor[i] = rpyMix[i] + constrain(mixerThrottleCommand * currentMixer[i].throttle, throttleMin, throttleMax);
             #endif

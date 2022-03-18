@@ -61,6 +61,7 @@ EXTENDED_FASTRAM uint64_t logicConditionsGlobalFlags;
 EXTENDED_FASTRAM int logicConditionValuesByType[LOGIC_CONDITION_LAST];
 EXTENDED_FASTRAM rcChannelOverride_t rcChannelOverrides[MAX_SUPPORTED_RC_CHANNEL_COUNT];
 EXTENDED_FASTRAM motorOverride_t motorOverrides[MAX_SUPPORTED_MOTORS];
+EXTENDED_FASTRAM bool motorDirFixed[MAX_SUPPORTED_MOTORS];
 
 void pgResetFn_logicConditions(logicCondition_t *instance)
 {
@@ -335,6 +336,12 @@ static int logicConditionCompute(
             motorOverrides[temporaryValue].active = true;
             motorOverrides[temporaryValue].value = constrain(operandB, PWM_RANGE_MIN, PWM_RANGE_MAX);
             LOGIC_CONDITION_GLOBAL_FLAG_ENABLE(LOGIC_CONDITION_GLOBAL_FLAG_OVERRIDE_MOTOR);
+            return true;
+        break;
+
+        case LOGIC_CONDITION_FORCE_MOTOR_FIXED:
+            temporaryValue = constrain(operandA - 1, 0, MAX_SUPPORTED_MOTORS - 1);
+            motorDirFixed[temporaryValue] = true;
             return true;
         break;
 
@@ -774,12 +781,16 @@ int16_t getRcChannelOverride(uint8_t channel, int16_t originalValue) {
     }
 }
 
-int16_t getMotorOverride(uint8_t channel, int16_t originalValue) {
+int16_t getMotorOverride(uint8_t channel, int16_t inputValue, float throttleMix, int16_t throttleMin, int16_t throttleMax, int16_t rpyMix) {
     if (motorOverrides[channel].active) {
-        return motorOverrides[channel].value;
+        return constrain(motorOverrides[channel].value, throttleMin, throttleMax);
     } else {
-        return originalValue;
+        return rpyMix + constrain(inputValue * throttleMix, throttleMin, throttleMax);
     }
+}
+
+bool getMotorDirFixed(uint8_t channel) {
+    return motorDirFixed[channel];
 }
 
 uint32_t getLoiterRadius(uint32_t loiterRadius) {
